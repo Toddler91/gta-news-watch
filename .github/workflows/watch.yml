@@ -1,0 +1,26 @@
+name: GTA news watch
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+concurrency:
+  group: gta-news-watch
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check feeds and push alerts
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python3 gta_news_watch.py
+      - name: Save state
+        run: |
+          git config user.name "news-watch"
+          git config user.email "news-watch@users.noreply.github.com"
+          git add state.json
+          git diff --cached --quiet || (git commit -m "state" && git push)
